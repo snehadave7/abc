@@ -1,161 +1,151 @@
-// import React from "react";
-// import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-// import Navbar from "./components/Navbar";
-// import ProductCatalog from "./pages/ProductCatalog";
-// import CartPage from "./pages/CartPage";
-// import CheckoutPage from "./pages/CheckoutPage";
-// import SellerDashboard from "./pages/SellerDashboard";
-// import AdminDashboard from "./pages/AdminDashboard";
-// import Footer from "./components/Footer";
-// import HomePage from "./pages/HomePage";
-// import Registration from "./pages/Registration";
-// import Login from "./pages/Login";
-// import AddAddressForm from "./pages/AddAddressForm";
-// const App = () => {
-//   return (
-//     <Router>
-//       {/* <Navbar /> */}
-//       <main className="container py-4">
-//         {<HomePage />}
-//         <Routes>
-//           <Route path="/" element={<ProductCatalog />} />
-//           <Route path="/login" element={<Login />} />
-//           <Route path="/register" element={<Registration />} />
-//           <Route path="/cart" element={<CartPage />} />
-//           <Route path= "/address" element={<AddAddressForm/>}/>
-//           <Route path="/checkout" element={<CheckoutPage />} />
-//           <Route path="/seller-dashboard" element={<SellerDashboard />} />
-//           <Route path="/admin-dashboard" element={<AdminDashboard />} />
-//         </Routes>
-//       </main>
-//       {/* <Footer /> */}
-//     </Router>
-//   );
-// };
-
-// export default App;
-
-import React, { useState } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Navbar from "./pages/Navbar";
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Registration from "./pages/Registration";
-import ProductsPage from "./pages/ProductsPage";
-import ProductDetailsPage from "./pages/ProductDetailsPage";
-import CartPage from "./pages/CartPage";
+import React, { useEffect, useState } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Outlet,
+} from "react-router-dom";
+import Navbar from "./pages/home/Navbar";
+import Home from "./pages/home/Home";
+import Login from "./pages/authentication/Login";
+import Registration from "./pages/authentication/Registration";
+import ProductsPage from "./pages/products/ProductsPage";
+import ProductDetailsPage from "./pages/products/ProductDetailsPage";
+import CartPage from "./pages/cart/CartPage";
 import "./App.css";
 import "bootstrap/dist/css/bootstrap.min.css";
-import PaymentPage from "./pages/PaymentPage";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import Account from "./pages/userProfile/Account";
+import PrivateRoute from "./util/privateRoute";
+import CheckoutPage from "./pages/payment/CheckoutPage";
+import SearchProducts from "./pages/home/search";
+import SellerLayout from "./pages/seller/layout";
+import SellerDashboard from "./pages/seller/sellerDashboard";
+import SellerProducts from "./pages/seller/seller-products";
+import SellerOrders from "./pages/seller/seller-Orders";
+import AdminLayout from "./pages/admin/admin-layout";
+import AdminDashboard from "./pages/admin/admin-dashboard";
+import AdminUser from "./pages/admin/admin-users";
+import AdminSeller from "./pages/admin/admin-sellers";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchCartItem } from "./service/cartItemsSlice";
+import AdminCategory from "./pages/admin/admin-category";
+import { fetchAllProductCategory } from "./service/adminCategorySlice";
+import SellerOrderDetailsPage from "./pages/seller/SellerOrderDetailsPage";
 
 function App() {
-  const [cart, setCart] = useState([]);
-  const [totalAmount, setTotalAmount] = useState(0);
+  const { cartItems } = useSelector((state) => state.shopCart);
+  const dispatch = useDispatch();
+  const [cartSize, setCartSize] = useState(0);
 
-  const addToCart = (product, quantity) => {
-   
-    setCart((prevCart) => {
-      const existingItem = prevCart.find(
-        (item) => item.productId === product.id
-      );
-      if (existingItem) {
-        // Update quantity if product already exists in cart
-        return prevCart.map((item) =>
-          item.productId === product.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
-      } else {
-        // Add new product to the cart
-        return [
-          ...prevCart,
-          { productId: product.id, quantity: quantity, product: product },
-          
-        ];
-      }
-    });
-  };
-  // Dummy data for demonstration
-  const products = [
-    {
-      id: 1,
-      name: "T-shirt",
-      description: "Comfortable cotton T-shirt",
-      price: 500,
-      stock: 10,
-      imageUrl: "tshirt.jpg",
-      reviews: [
-        { userName: "John", comment: "Great product!", rating: 4 },
-        { userName: "Alice", comment: "Loved it!", rating: 5 },
-      ],
-    },
-    {
-      id: 2,
-      name: "Smartphone",
-      description: "Latest 5G smartphone",
-      price: 20000,
-      stock: 0,
-      imageUrl: "smartphone.jpg",
-      reviews: [],
-    },
-    {
-      id: 3,
-      name: "Rice",
-      description: "High-quality basmati rice",
-      price: 2000,
-      stock: 5,
-      category: "Grocery",
-      imageUrl: "rice.jpg",
-    },
-  ];
+  useEffect(() => {
+    const cartId = parseInt(localStorage.getItem("cartId"), 10);
+    if (cartId) {
+      dispatch(fetchCartItem(cartId));
+    }
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (cartItems) {
+      setCartSize(cartItems.length);
+    }
+  }, [dispatch, cartItems]);
+
+  const { categoryList = [], isLoading } = useSelector(
+    (state) => state.adminCategory
+  );
+
+  useEffect(() => {
+    dispatch(fetchAllProductCategory());
+  }, [dispatch]);
 
   return (
-    <Router>
-      <Navbar cart={cart} />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Registration />} />
-        
-        <Route
-          path="/cart"
-          element={<CartPage cart={cart} products={products}setCart={setCart} />}
-        />
-        <Route
-          path="/fashion"
-          element={<ProductsPage products={products} category="Fashion" />}
-        />
-        <Route
-          path="/electronics"
-          element={<ProductsPage products={products} category="Electronics" />}
-        />
-        <Route
-          path="/grocery"
-          element={<ProductsPage products={products} category="Grocery" />}
-        />
-        <Route
-          path="/product/:id"
-          element={<ProductDetailsPage addToCart={addToCart} />}
-        />
-        <Route
-          path="/cart"
-          element={
-            <CartPage cart={cart} setCart={setCart} products={products} />
-          }
-        />
-        <Route
-          path="/payment"
-          element={
-            <PaymentPage
-              cart={cart}
-              totalAmount={totalAmount}
-              setCart={setCart}
-            />
-          }
-        />
-        <Route path="*" element={<h1>404 - Page Not Found</h1>} />
-      </Routes>
-    </Router>
+    <>
+      <ToastContainer />
+      <Router>
+        <Routes>
+          {/* Routes with Navbar */}
+          <Route
+            element={
+              <>
+                <Navbar cartSize={cartSize} />
+                <Outlet />
+              </>
+            }
+          >
+            {/* Public Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Registration />} />
+
+            {/* Customer Routes */}
+            <Route element={<PrivateRoute allowedRoles={["customer"]} />}>
+              <Route path="/" element={<Home />} />
+              {/* <Route
+                path="/clothing"
+                element={<ProductsPage category="Clothing" />}
+              />
+              <Route
+                path="/electronics"
+                element={<ProductsPage category="Electronics" />}
+              />
+              <Route
+                path="/groceries"
+                element={<ProductsPage category="Groceries" />}
+              /> */}
+
+              {Array.isArray(categoryList) &&
+                categoryList.map((item) => (
+                  <Route
+                    path={`/${item.name}`}
+                    element={
+                      <ProductsPage
+                        categoryId={`${item.id}`}
+                        category={`${item.name}`}
+                      />
+                    }
+                  />
+                ))}
+
+              <Route path="/account/*" element={<Account />} />
+              <Route path="/product/:id" element={<ProductDetailsPage />} />
+              <Route path="/cart" element={<CartPage />} />
+              <Route
+                path="/payment"
+                element={<CheckoutPage setCartSize={setCartSize} />}
+              />
+              <Route path="/search" element={<SearchProducts />} />
+            </Route>
+          </Route>
+
+          {/* Seller Routes (No Navbar) */}
+          <Route element={<PrivateRoute allowedRoles={["seller"]} />}>
+            <Route path="/seller" element={<SellerLayout />}>
+              <Route path="dashboard" element={<SellerDashboard />} />
+              <Route path="products" element={<SellerProducts />} />
+              <Route path="orders" element={<SellerOrders />} />
+              <Route
+                path="orders/:orderId/:paymentId"
+                element={<SellerOrderDetailsPage />}
+              />
+            </Route>
+          </Route>
+
+          {/* Admin Routes (No Navbar) */}
+          <Route element={<PrivateRoute allowedRoles={["admin"]} />}>
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="users" element={<AdminUser />} />
+              <Route path="sellers" element={<AdminSeller />} />
+              <Route path="category" element={<AdminCategory />} />
+            </Route>
+          </Route>
+
+          {/* Fallback for Undefined Routes */}
+          <Route path="*" element={<h1>404 - Page Not Found</h1>} />
+        </Routes>
+      </Router>
+    </>
   );
 }
 
